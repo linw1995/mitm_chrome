@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "mitm_chrome"
+version = "0.1.0"
+description = ""
+authors = ["林玮 <linw1995@icloud.com>"]
+license = "MIT"
+
+[tool.poetry.scripts]
+mitm_chrome = 'mitm_chrome:cli'
+
+[tool.poetry.dependencies]
+python = "^3.8"
+mitmproxy = "^5.0.1"
+
+[tool.poetry.dev-dependencies]
+rope = "^0.16.0"
+flake8-bugbear = "^20.1.4"
+isort = "^4.3.21"
+black = {version = "^19.10b0", allow-prereleases = true}
+
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+[tool.isort]
+atomic=true
+line_length=80
+force_grid_wrap=0
+include_trailing_comma=true
+lines_after_imports=2
+lines_between_types=1
+multi_line_output=3
+not_skip='__init__.py'
+use_parentheses=true
+
+import_heading_stdlib='Standard Library'
+import_heading_thirdparty='Third Party Library'
+import_heading_firstparty='First Party Library'
+import_heading_localfolder='Local Folder'
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
