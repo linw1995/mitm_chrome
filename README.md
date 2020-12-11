@@ -5,8 +5,7 @@ Integrate chrome with [mitmproxy](https://mitmproxy.org/).
 ## installation
 
 ```shell
-git clone https://github.com/linw1995/mitm_chrome.git
-pip install ./mitm_chrome
+pip install mitm_chrome
 ```
 
 ## Usage
