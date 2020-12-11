@@ -6,12 +6,10 @@ import logging
 import socket
 import sys
 import tempfile
-
 from contextlib import closing
 
 # Third Party Library
 from mitmproxy.tools._main import mitmdump, mitmproxy, mitmweb
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +26,7 @@ def create_parser():
     parser.add_argument(
         "--chrome-path", default="chrome", help="chrome executable path"
     )
-    parser.add_argument(
-        "-ph", "--proxy-host", default="localhost", help="proxy host"
-    )
+    parser.add_argument("-ph", "--proxy-host", default="localhost", help="proxy host")
     parser.add_argument("-pp", "--proxy-port", type=int, help="proxy port")
     parser.add_argument("--cdp-port", type=int, help="enable chrome devtools")
     parser.add_argument("--user-data-dir", help="chrome user data dir")
@@ -50,19 +46,18 @@ async def log_proc_output(
         logger = logging.getLogger(__name__)
 
     async def log_output(reader: asyncio.StreamReader, name: str):
+        assert logger is not None
         output = await reader.readline()
         logger.debug("%r %s: %s", proc, name, output.decode())
 
     log_stdout = log_stderr = None
     while proc.returncode is None:
         if log_stdout is None or log_stdout.done():
-            log_stdout = asyncio.ensure_future(
-                log_output(proc.stdout, "stdout")
-            )
+            assert proc.stdout is not None
+            log_stdout = asyncio.ensure_future(log_output(proc.stdout, "stdout"))
         if log_stderr is None or log_stderr.done():
-            log_stderr = asyncio.ensure_future(
-                log_output(proc.stderr, "stderr")
-            )
+            assert proc.stderr is not None
+            log_stderr = asyncio.ensure_future(log_output(proc.stderr, "stderr"))
 
         await asyncio.wait(
             [log_stderr, log_stdout],
@@ -78,9 +73,16 @@ async def log_proc_output(
 
 
 async def launch_browser(
-    chrome_path, proxy_host, proxy_port, cdp_port=None, user_data_dir=None
+    chrome_path,
+    proxy_host,
+    proxy_port,
+    cdp_port=None,
+    user_data_dir=None,
 ):
-    args = [f"--proxy-server={proxy_host}:{proxy_port}", "--no-first-run"]
+    args = [
+        f"--proxy-server={proxy_host}:{proxy_port}",
+        "--no-first-run",
+    ]
     if cdp_port is not None:
         args.append(f"--remote-debugging-port={cdp_port}")
 
@@ -129,14 +131,11 @@ def cli(args=None, namespace=None):
 
     asyncio.ensure_future(coro)
     if args.command == "mitmproxy":
-        sys.exit(
-            mitmproxy(args=["--listen-port", str(args.proxy_port)] + unknown)
-        )
+        run_mitm = mitmproxy
     elif args.command == "mitmdump":
-        sys.exit(
-            mitmdump(args=["--listen-port", str(args.proxy_port)] + unknown)
-        )
+        run_mitm = mitmdump
     elif args.command == "mitmweb":
-        sys.exit(
-            mitmweb(args=["--listen-port", str(args.proxy_port)] + unknown)
-        )
+        run_mitm = mitmweb
+
+    exit_code = run_mitm(args=["--listen-port", str(args.proxy_port)] + unknown)
+    sys.exit(exit_code)
