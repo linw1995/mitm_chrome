@@ -1,9 +1,23 @@
 [tool.poetry]
 name = "mitm_chrome"
 version = "0.1.0"
-description = ""
-authors = ["林玮 <linw1995@icloud.com>"]
+description = "Integrate chrome with mitmproxy."
 license = "MIT"
+authors = ["林玮 (Jade Lin) <linw1995@icloud.com>"]
+readme = "README.md"
+homepage = "https://github.com/linw1995/mitm_chrome"
+repository = "https://github.com/linw1995/mitm_chrome"
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Development Status :: 4 - Beta",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+]
+include = ["CHANGELOG.md"]
 
 [tool.poetry.scripts]
 mitm_chrome = 'mitm_chrome:cli'
@@ -16,6 +30,12 @@ mitmproxy = "^5.0.1"
 isort = "^5.6.4"
 black = "^20.8b1"
 flake8-bugbear = "^20.11.1"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = ["pyproject.toml:version"]
+tag_format = "$version"
 
 [tool.isort]
 profile='black'
