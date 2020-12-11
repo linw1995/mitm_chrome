@@ -111,3 +111,5 @@ dmypy.json
 
 # VSCode
 .vscode
+# Persp-mode
+.persp-confs
