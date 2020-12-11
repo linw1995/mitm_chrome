@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mitm_chrome"
-version = "0.1.0"
+version = "0.1.1"
 description = "Integrate chrome with mitmproxy."
 license = "MIT"
 authors = ["林玮 (Jade Lin) <linw1995@icloud.com>"]
@@ -33,7 +33,7 @@ flake8-bugbear = "^20.11.1"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.1.1"
 version_files = ["pyproject.toml:version"]
 tag_format = "$version"
 
