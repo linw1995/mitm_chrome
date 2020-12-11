@@ -85,14 +85,17 @@ async def launch_browser(
         args.append(f"--remote-debugging-port={cdp_port}")
 
     async def _launch_browser():
-        proc = await asyncio.create_subprocess_exec(
+        proc: asyncio.Process = await asyncio.create_subprocess_exec(
             chrome_path,
             *args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
         logger.info("browser launched, proc %r", proc)
-        await log_proc_output(proc)
+        try:
+            await log_proc_output(proc)
+        finally:
+            proc.terminate()
 
     if user_data_dir is None:
         with tempfile.TemporaryDirectory() as user_data_dir:
