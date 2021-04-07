@@ -6,22 +6,23 @@ import logging
 import socket
 import sys
 import tempfile
-from contextlib import closing
+from contextlib import closing, suppress
+from typing import List
 
 # Third Party Library
-from mitmproxy.tools._main import mitmdump, mitmproxy, mitmweb
+from mitmproxy.tools.main import mitmdump, mitmproxy, mitmweb
 
 logger = logging.getLogger(__name__)
 
 
-def get_unused_port():
+def get_unused_port() -> int:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
         s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
 
-def create_parser():
+def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--chrome-path", default="chrome", help="chrome executable path"
@@ -39,7 +40,7 @@ def create_parser():
     return parser
 
 
-async def log_proc_output(
+async def handle_running_process(
     proc: asyncio.subprocess.Process, logger: logging.Logger = None
 ):
     if logger is None:
@@ -47,29 +48,46 @@ async def log_proc_output(
 
     async def log_output(reader: asyncio.StreamReader, name: str):
         assert logger is not None
-        output = await reader.readline()
-        logger.debug("%r %s: %s", proc, name, output.decode())
+        while True:
+            output = await reader.readline()
+            logger.debug("%r %s: %s", proc, name, output.decode())
 
-    log_stdout = log_stderr = None
-    while proc.returncode is None:
-        if log_stdout is None or log_stdout.done():
-            assert proc.stdout is not None
-            log_stdout = asyncio.ensure_future(log_output(proc.stdout, "stdout"))
-        if log_stderr is None or log_stderr.done():
-            assert proc.stderr is not None
-            log_stderr = asyncio.ensure_future(log_output(proc.stderr, "stderr"))
+    loggers: List[asyncio.Future[None]] = []
+    if proc.stdout:
+        log_stdout = asyncio.ensure_future(log_output(proc.stdout, "stdout"))
+        loggers.append(log_stdout)
 
-        await asyncio.wait(
-            [log_stderr, log_stdout],
-            timeout=1,
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+    if proc.stderr:
+        log_stderr = asyncio.ensure_future(log_output(proc.stderr, "stderr"))
+        loggers.append(log_stderr)
 
-    if log_stderr:
-        log_stderr.cancel()
+    try:
+        return await proc.wait()
+    except asyncio.CancelledError:
+        if proc.returncode is None:
+            proc.terminate()
+            await proc.wait()
 
-    if log_stdout:
-        log_stdout.cancel()
+        for async_logger in loggers:
+            async_logger.cancel()
+
+        for async_logger in loggers:
+            with suppress(asyncio.CancelledError):
+                await async_logger
+    finally:
+        if proc.returncode is None:
+            proc.kill()
+
+
+async def _launch_browser(chrome_path, args):
+    proc: asyncio.Process = await asyncio.create_subprocess_exec(
+        chrome_path,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    logger.info("browser launched, proc %r", proc)
+    return await handle_running_process(proc)
 
 
 async def launch_browser(
@@ -86,26 +104,13 @@ async def launch_browser(
     if cdp_port is not None:
         args.append(f"--remote-debugging-port={cdp_port}")
 
-    async def _launch_browser():
-        proc: asyncio.Process = await asyncio.create_subprocess_exec(
-            chrome_path,
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        logger.info("browser launched, proc %r", proc)
-        try:
-            await log_proc_output(proc)
-        finally:
-            proc.terminate()
-
     if user_data_dir is None:
         with tempfile.TemporaryDirectory() as user_data_dir:
             args.append(f"--user-data-dir={user_data_dir}")
-            await _launch_browser()
+            return await _launch_browser(chrome_path, args)
     else:
         args.append(f"--user-data-dir={user_data_dir}")
-        await _launch_browser()
+        return await _launch_browser(chrome_path, args)
 
 
 def cli(args=None, namespace=None):
@@ -126,8 +131,9 @@ def cli(args=None, namespace=None):
         args.cdp_port,
         args.user_data_dir,
     )
+    loop = asyncio.get_event_loop()
     if args.command == "config":
-        return asyncio.get_event_loop().run_until_complete(coro)
+        return sys.exit(loop.run_until_complete(coro))
 
     asyncio.ensure_future(coro)
     if args.command == "mitmproxy":
