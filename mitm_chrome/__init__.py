@@ -2,11 +2,11 @@
 import argparse
 import asyncio
 import asyncio.subprocess
-import threading
 import logging
 import socket
 import sys
 import tempfile
+import threading
 from contextlib import closing, suppress
 from typing import List
 
