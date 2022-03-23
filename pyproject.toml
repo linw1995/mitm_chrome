@@ -24,7 +24,7 @@ mitm_chrome = 'mitm_chrome:cli'
 
 [tool.poetry.dependencies]
 python = "^3.9"
-mitmproxy = "^6"
+mitmproxy = "^8"
 
 [tool.poetry.dev-dependencies]
 flake8-bugbear = "^20.11.1"

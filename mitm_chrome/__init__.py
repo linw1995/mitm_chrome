@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import asyncio.subprocess
+import threading
 import logging
 import socket
 import sys
@@ -131,11 +132,12 @@ def cli(args=None, namespace=None):
         args.cdp_port,
         args.user_data_dir,
     )
-    loop = asyncio.get_event_loop()
     if args.command == "config":
-        return sys.exit(loop.run_until_complete(coro))
+        return sys.exit(asyncio.run(coro))
 
-    asyncio.ensure_future(coro)
+    thr = threading.Thread(target=lambda: asyncio.run(coro), daemon=True)
+    thr.start()
+
     if args.command == "mitmproxy":
         run_mitm = mitmproxy
     elif args.command == "mitmdump":
