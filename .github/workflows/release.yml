@@ -25,7 +25,7 @@ jobs:
       - name: Publish release to PYPI
         run: |
           pip install twine
-          twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
+          twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} --verbose dist/*
       - name: Publish release to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
