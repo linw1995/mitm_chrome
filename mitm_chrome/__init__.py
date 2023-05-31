@@ -8,7 +8,7 @@ import sys
 import tempfile
 import threading
 from contextlib import closing, suppress
-from typing import List
+from typing import List, Optional
 
 # Third Party Library
 from mitmproxy.tools.main import mitmdump, mitmproxy, mitmweb
@@ -42,7 +42,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 async def handle_running_process(
-    proc: asyncio.subprocess.Process, logger: logging.Logger = None
+    proc: asyncio.subprocess.Process, logger: Optional[logging.Logger] = None
 ):
     if logger is None:
         logger = logging.getLogger(__name__)
